@@ -1,6 +1,7 @@
 const { User } = require("../models");
 const httpStatus = require("http-status");
 const ApiError = require("../utils/ApiError");
+const bcrypt = require("bcryptjs");
 
 /**
  * Get User by id
@@ -25,7 +26,9 @@ const getUserByEmail = async (email) => {
 /**
  * Create a user
  *  - check if the user with the email already exists using `User.isEmailTaken()` method
- *  - If so throw an error using the `ApiError` class.
+ *  - If so throw an error using the `ApiError` class. Pass two arguments to the constructor,
+ *    1. “200 OK status code using `http-status` library
+ *    2. An error message, “Email already taken”
  *  - Otherwise, create and return a new User object
  *
  * @param {Object} userBody
@@ -55,13 +58,14 @@ const getUserAddressById = async (id) => {
  * @param {User} user
  * @param {String} newAddress
  * @returns {Promise<User>}
+ * @param {String} email
+ * @returns {String}
  */
 const setAddress = async (user, newAddress) => {
   user.address = newAddress;
   await user.save();
-  return user;
+  return user.address;
 };
-
 // Export all the functions so they can be used in controllers
 module.exports = {
   getUserById,
@@ -70,3 +74,4 @@ module.exports = {
   getUserAddressById,
   setAddress,
 };
+

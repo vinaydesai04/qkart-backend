@@ -146,9 +146,53 @@ const deleteProductFromCart = async (user, productId) => {
   await cart.save();
 };
 
+/**
+ * Checkout a user's cart.
+ * On success, returns the cart object.
+ *
+ * @param {User} user
+ * @returns {Promise<Cart>}
+ * @throws {ApiError}
+ */
+ const checkout = async (user) => {
+  const cart = await Cart.findOne({ email: user.email }).populate("cartItems.product");
+
+  if (!cart) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User does not have a cart");
+  }
+
+  if (cart.cartItems.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User does not have products in the cart");
+  }
+
+  const hasSetNonDefaultAddress = await user.hasSetNonDefaultAddress();
+  if (!hasSetNonDefaultAddress) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User has not set an address");
+  }
+
+  // Calculate total cost
+  let totalCost = 0;
+  cart.cartItems.forEach((item) => {
+    totalCost += item.product.cost * item.quantity;
+  });
+
+  if (user.walletMoney < totalCost) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User does not have sufficient balance");
+  }
+
+  // Deduct balance and save user
+  user.walletMoney -= totalCost;
+  await user.save();
+
+  // Empty the cart and save
+  cart.cartItems = [];
+  await cart.save();
+};
+
 module.exports = {
   getCartByUser,
   addProductToCart,
   updateProductInCart,
   deleteProductFromCart,
+  checkout,
 };

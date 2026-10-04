@@ -67,6 +67,15 @@ userSchema.methods.isPasswordMatch = async function (password) {
 };
 
 /**
+ * Check if user has set a non-default address
+ * @returns {Promise<boolean>}
+ */
+userSchema.methods.hasSetNonDefaultAddress = async function () {
+  const user = this;
+  return user.address !== config.default_address;
+};
+
+/**
  * @typedef User
  */
 const User = mongoose.model("User", userSchema);
