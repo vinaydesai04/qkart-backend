@@ -7,7 +7,10 @@ const { userService } = require("../services");
  * Get user details
  *  - Use service layer to get User data
  * 
+ *  - If query param, "q" equals "address", return only the address field of the user
+ *  - Else,
  *  - Return the whole user object fetched from Mongo
+ *
  *  - If data exists for the provided "userId", return 200 status code and the object
  *  - If data doesn't exist, throw an error using `ApiError` class
  *    - Status code should be "404 NOT FOUND"
@@ -19,29 +22,45 @@ const { userService } = require("../services");
  * @returns {User | {address: String}}
  */
 const getUser = catchAsync(async (req, res) => {
-  // Fetch user data from the database
   const user = await userService.getUserById(req.params.userId);
   
-  // 1. If data doesn't exist, throw 404
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
   
-  // 2. AUTHORIZATION: Check if the logged-in user is requesting their own data
-  // req.user is set by your auth middleware
-  if (req.user.email !== user.email) {
+  if (user.email !== req.user.email) {
     throw new ApiError(httpStatus.FORBIDDEN, "User not found");
   }
 
-  // 3. Handle specific request for address (used in later milestones)
+  // Handle ?q=address query parameter
   if (req.query.q === "address") {
-    return res.send({ address: user.address });
+    return res.send({
+      address: user.address,
+    });
   }
 
-  // 4. Send the full user object with implicit 200 status
+  // Return full user object by default
   res.send(user);
+});
+
+const setAddress = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.params.userId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if (user.email !== req.user.email) {
+    throw new ApiError(httpStatus.FORBIDDEN, "User not found");
+  }
+
+  const result = await userService.setAddress(user, req.body.address);
+
+  res.send({
+    address: result.address ? result.address : result, // Safely handles either user object or string returned from service
+  });
 });
 
 module.exports = {
   getUser,
+  setAddress,
 };

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const bcrypt = require("bcryptjs"); // 1. Require bcryptjs
+const bcrypt = require("bcryptjs");
 const config = require("../config/config");
 
 const userSchema = mongoose.Schema(
@@ -48,13 +48,11 @@ const userSchema = mongoose.Schema(
   }
 );
 
-// TODO: CRIO_TASK_MODULE_UNDERSTANDING_BASICS - Implement the isEmailTaken() static method
 userSchema.statics.isEmailTaken = async function (email) {
   const user = await this.findOne({ email });
   return !!user;
 };
 
-// 2. Add pre-save hook to hash password before saving to MongoDB
 userSchema.pre("save", async function (next) {
   const user = this;
   if (user.isModified("password")) {
@@ -63,15 +61,9 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// TODO: CRIO_TASK_MODULE_UNDERSTANDING_BASICS
-/**
- * Check if entered password matches the user's password
- * @param {string} password
- * @returns {Promise<boolean>}
- */
 userSchema.methods.isPasswordMatch = async function (password) {
   const user = this;
-  return bcrypt.compare(password, user.password); // 3. Implement password comparison
+  return bcrypt.compare(password, user.password);
 };
 
 /**
