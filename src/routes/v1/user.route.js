@@ -1,13 +1,14 @@
 const express = require("express");
+const auth = require("../../middlewares/auth");
 const validate = require("../../middlewares/validate");
 const userValidation = require("../../validations/user.validation");
 const userController = require("../../controllers/user.controller");
 
 const router = express.Router();
 
-// TODO: CRIO_TASK_MODULE_UNDERSTANDING_BASICS - Implement GET /v1/users/:userId route with validation
 router.get(
   "/:userId",
+  auth, // <-- No parentheses here!
   validate(userValidation.getUser),
   userController.getUser
 );
